@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Intake Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .status-box {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid #6366f1;
+        }
+
+        .status-text {
+            color: #374151;
+            font-size: 16px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            min-height: 90px;
+            display: none;
+            align-items: center;
+            font-size: 18px;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .question-box.active {
+            display: flex;
+        }
+
+        .visualizer {
+            width: 100%;
+            height: 80px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin: 24px 0;
+            display: none;
+            border: 2px solid #e5e7eb;
+        }
+
+        .visualizer.active {
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-record {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-record:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-record.recording {
+            background: #10b981;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .btn-stop {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 24px 0;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 24px 0;
+            display: none;
+            border-radius: 12px;
+        }
+
+        .audio-player.active {
+            display: block;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-text {
+            color: #1e40af;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .warning-box.active {
+            display: block;
+        }
+
+        .warning-box.error {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        .warning-box.success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .warning-box.error .warning-title {
+            color: #991b1b;
+        }
+
+        .warning-box.success .warning-title {
+            color: #065f46;
+        }
+
+        .warning-text {
+            color: #92400e;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .warning-box.error .warning-text {
+            color: #991b1b;
+        }
+
+        .warning-box.success .warning-text {
+            color: #065f46;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 24px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1 class="title">
+                    <span>🎤</span>
+                    Voice Intake Assessment
+                </h1>
+                <p class="subtitle">
+                    A natural conversation with an AI clinical assistant
+                </p>
+            </div>
+
+            <div class="status-box">
+                <div class="status-text" id="status">
+                    Welcome! Press "Start Recording" to begin your assessment. You'll have a conversation where I'll ask you questions about your mental health and wellness. Speak naturally, and take your time.
+                </div>
+            </div>
+
+            <div class="question-box" id="question"></div>
+
+            <canvas class="visualizer" id="visualizer"></canvas>
+
+            <div class="controls">
+                <button class="btn btn-record" id="recordBtn">
+                    <span>🎤</span>
+                    <span>Start Recording</span>
+                </button>
+                <button class="btn btn-stop" id="stopBtn" disabled>
+                    <span>⏹️</span>
+                    <span>Stop & Send</span>
+                </button>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <audio class="audio-player" id="audioPlayer" controls></audio>
+
+            <div class="info-box">
+                <div class="info-title">💡 How it works:</div>
+                <div class="info-text">
+                    1. Click "Start Recording" and answer the question out loud<br>
+                    2. Click "Stop & Send" when you finish speaking<br>
+                    3. I'll analyze your response and ask the next question<br>
+                    4. Repeat for about 10-15 minutes until complete
+                </div>
+            </div>
+
+            <div class="warning-box" id="warningBox">
+                <div class="warning-title" id="warningTitle">⚠️ Notice:</div>
+                <div class="warning-text" id="warningText"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ UPDATE THIS WITH YOUR N8N WEBHOOK URL
+        const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
+        
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let sessionId = null;
+        let isRecording = false;
+        let audioContext = null;
+        let analyser = null;
+        let dataArray = null;
+
+        const elements = {
+            recordBtn: document.getElementById('recordBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            status: document.getElementById('status'),
+            question: document.getElementById('question'),
+            visualizer: document.getElementById('visualizer'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressBar: document.getElementById('progressBar'),
+            audioPlayer: document.getElementById('audioPlayer'),
+            warningBox: document.getElementById('warningBox'),
+            warningTitle: document.getElementById('warningTitle'),
+            warningText: document.getElementById('warningText')
+        };
+
+        function init() {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            elements.recordBtn.addEventListener('click', toggleRecording);
+            elements.stopBtn.addEventListener('click', stopRecording);
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showWarning('Your browser does not support audio recording. Please use Chrome, Firefox, or Edge.', true);
+                elements.recordBtn.disabled = true;
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    } 
+                });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                elements.visualizer.classList.add('active');
+                drawVisualizer();
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm'
+                });
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await sendAudioToAPI(audioBlob);
+                    
+                    elements.visualizer.classList.remove('active');
+                    if (audioContext) {
+                        audioContext.close();
+                        audioContext = null;
+                    }
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                elements.recordBtn.classList.add('recording');
+                elements.recordBtn.innerHTML = '<span>🔴</span><span>Recording...</span>';
+                elements.stopBtn.disabled = false;
+                elements.status.textContent = 'Listening... Speak naturally and take your time!';
+                
+            } catch (error) {
+                console.error('Microphone error:', error);
+                showWarning('Unable to access microphone. Please check your browser permissions and try again.', true);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                elements.recordBtn.classList.remove('recording');
+                elements.recordBtn.innerHTML = '<span>🎤</span><span>Start Recording</span>';
+                elements.stopBtn.disabled = true;
+                elements.status.textContent = 'Processing your response... This may take 10-15 seconds.';
+                showProgress();
+            }
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            }
+        }
+
+        async function sendAudioToAPI(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                formData.append('sessionId', sessionId);
+                
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed: ' + response.status);
+                }
+                
+                const data = await response.json();
+                handleAPIResponse(data);
+                
+            } catch (error) {
+                console.error('API error:', error);
+                hideProgress();
+                showWarning('Connection error. Please check your internet connection and try again.', true);
+            }
+        }
+
+        function handleAPIResponse(data) {
+            hideProgress();
+            
+            if (data.complete) {
+                elements.status.textContent = '✅ Assessment Complete! Thank you for your time.';
+                elements.question.classList.remove('active');
+                elements.recordBtn.disabled = true;
+                elements.stopBtn.disabled = true;
+                
+                showWarning(data.message || 'Your responses have been saved. Your therapist will review them and contact you within 24 hours.', false, true);
+                
+                if (data.audio) {
+                    playAudio(data.audio);
+                }
+                
+            } else {
+                elements.question.classList.add('active');
+                elements.question.textContent = data.nextQuestion;
+                elements.status.textContent = 'Question ready. Press "Start Recording" when you\'re ready to respond.';
+                
+                if (data.audioData) {
+                    playAudio(data.audioData);
+                }
+                
+                if (data.urgentFlag) {
+                    showWarning('If you are in crisis right now, please call 988 (Suicide & Crisis Lifeline) or go to your nearest emergency room.', true);
+                }
+            }
+        }
+
+        function playAudio(base64Audio) {
+            elements.audioPlayer.src = 'data:audio/mpeg;base64,' + base64Audio;
+            elements.audioPlayer.classList.add('active');
+            elements.audioPlayer.play().catch(e => console.log('Autoplay blocked'));
+        }
+
+        function showProgress() {
+            elements.progressContainer.classList.add('active');
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                } else {
+                    width += 10;
+                    elements.progressBar.style.width = width + '%';
+                }
+            }, 300);
+        }
+
+        function hideProgress() {
+            elements.progressContainer.classList.remove('active');
+            elements.progressBar.style.width = '0%';
+        }
+
+        function showWarning(message, isError = false, isSuccess = false) {
+            elements.warningBox.classList.remove('error', 'success');
+            elements.warningBox.classList.add('active');
+            
+            if (isError) {
+                elements.warningBox.classList.add('error');
+                elements.warningTitle.textContent = '⚠️ Alert:';
+            } else if (isSuccess) {
+                elements.warningBox.classList.add('success');
+                elements.warningTitle.textContent = '✅ Success:';
+            } else {
+                elements.warningTitle.textContent = 'ℹ️ Notice:';
+            }
+            
+            elements.warningText.textContent = message;
+        }
+
+        function drawVisualizer() {
+            if (!analyser || !isRecording) return;
+            
+            const canvas = elements.visualizer;
+            const ctx = canvas.getContext('2d');
+            const WIDTH = canvas.width = canvas.offsetWidth;
+            const HEIGHT = canvas.height = canvas.offsetHeight;
+            
+            analyser.getByteFrequencyData(dataArray);
+            
+            ctx.fillStyle = '#f9fafb';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            const barWidth = (WIDTH / dataArray.length) * 2.5;
+            let barHeight;
+            let x = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                barHeight = (dataArray[i] / 255) * HEIGHT * 0.8;
+                
+                const gradient = ctx.createLinearGradient(0, HEIGHT, 0, HEIGHT - barHeight);
+                gradient.addColorStop(0, '#6366f1');
+                gradient.addColorStop(1, '#8b5cf6');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+                
+                x += barWidth + 1;
+            }
+            
+            if (isRecording) {
+                requestAnimationFrame(drawVisualizer);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
